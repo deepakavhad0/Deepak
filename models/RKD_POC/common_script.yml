@@ -1,0 +1,29 @@
+models:
+  - name: common_script
+    config:
+        src_name: "ABS"
+        #stage: "Bronze"
+        ops_upd: "UPD"
+        ops_ins: "INS"
+        src_sch: "LANDING"
+        src_obj: "TABLE1"
+        tgt_sch: "BRNZ_ABS"
+        tgt_obj: "RAW_ABS_TABLE1"
+        status_success: "Success"
+        status_start: "Started"
+        status_fail: "Failed"
+        proc_typ_msg_start: "Started validation checks for Table"
+        proc_typ_msg_success: "validation checks for Table are successfull"
+        integration_id: ''
+        flag: 'Y'
+    columns:
+          - name: ID
+            #description: '{{doc("md_dsc_sap_legacy_company_code")}}'
+            tests:
+              - null_check
+          - name: NAME
+            #description: '{{doc("md_dsc_sap_legacy_gl_account")}}'
+            #tests:
+              #- null_check
+          - name: MOBILE_NUMBER
+            #description: '{{doc("md_dsc_sap_legacy_profit_center")}}'

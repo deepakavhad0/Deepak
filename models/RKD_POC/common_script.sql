@@ -1,11 +1,32 @@
-{{
-    config(
-        materialized="table",
+{{ config(materialized="table",
         schema=var("sch"),
-        transient=false,
+        transient= false,
         alias=var("tbl_nm"),
-    )
-}}
+        pre_hook="{% set status = insert_data_into_audit_table(
+        model.config.ops_ins,
+        model.name,
+        model.config.src_name,
+        model.config.status_start,
+        model.config.proc_typ_msg_start,
+        model.config.integration_id,
+        model.config.flag,
+        model.config.src_sch,
+        model.config.src_obj,
+        model.config.tgt_sch,
+        model.config.tgt_obj
+    ) %} {{ log('Pre-hook status: ' ~ status, info=True) }}",
+        post_hook=["{% set status = insert_data_into_audit_table(
+        model.config.ops_upd,
+        model.name, 
+        model.config.src_name,       
+        model.config.status_success,
+        model.config.proc_typ_msg_success,
+        model.config.integration_id,
+        ''
+    ) %} {{ log('Post-hook status: ' ~ status, info=True) }}"]
+
+) }}
+
 
 {{ log("Configured schema: BRNZ_ABS", info=True) }}
 
@@ -40,7 +61,6 @@
     {% set p_is_full_load = source_data["p_is_full_load"] %}
     {% set p_enable_flag = source_data["p_enable_flag"] %}
     {# Use the returned values in your SQL statement #}
-
     {{ p_src_query }}
 
 {% else %} {{ log("Source data is missing or incomplete.", info=True) }}

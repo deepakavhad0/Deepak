@@ -1,16 +1,20 @@
 -- Macro to Insert Audit Log for a process & update the process status in Audit Log
 -- Table update
 {% macro insert_data_into_audit_table(
-    p_load_type,
+    p_load_type,  
     p_job_name,
     p_src_name,
     p_status,
     p_proc_typ_p_msg,
     p_stage,
     p_integration_id,
-    p_increment_flag
+    p_increment_flag,
+    p_src_obj,
+    p_src_sch,
+    p_tgt_obj, 
+    p_tgt_sch
 ) %}
-
+    --{{ print("Result: "~ p_src_sch) }}
     {#
 Parameters :
 "p_load_type" will accept two values. "INS" for Creating a new audit . "UPD" for Updating process status. NULL value will be considered as INSERT ("INS").
@@ -23,18 +27,17 @@ Parameters :
 "p_increment_flag"  will be used to populate loadid
 #}
     -- Declare variables
-    {% set v_table_name = "adt_fpa_audit" %}
-    {#{% set audit_table_name = var(p_src_name)%}#}
+    {% set v_table_name = "ADT_AUDIT" %}
     
     {% set v_audit_table = (
-        env_var("DBT_SF_SILVER_DB")
+        env_var("DBT_SRC_DB")
         ~ "."
-        ~ env_var("DBT_SF_SILVER_FPA_DATA")
+        ~ env_var("DBT_LOG_SCH")
         ~ "."
-        ~ "ADT_FPA_AUDIT_" ~ p_src_name
+        ~ env_var("DBT_LOG_OBJ") 
     ) %}
     {% set v_load_type = "INS" if p_load_type is none else p_load_type %}
-    {% set v_job_name = "NA" if p_job_name is none else p_job_name %}
+    {% set v_job_name = "NA" if v_job_name is none else v_job_name %}
     {% set v_stage = "NA" if p_stage is none else p_stage %}
     {% set v_increment_flag = "Y" if p_increment_flag is none else p_increment_flag %}
     {% set v_source = p_src_name if p_src_name is not none else null %}
@@ -49,13 +52,12 @@ Parameters :
                 p_integration_id if p_integration_id is not none else null
             ) %}
 
-            -- Query to get AUDIT_ID
             {%- call statement("get_audit_id", fetch_result=True) -%}
                 select nvl(max(id), 0) + 1 from {{ v_audit_table }}
             {%- endcall -%}
             {%- set v_audit_id = load_result("get_audit_id")["data"][0][0] -%}
 
-            -- Query to get LOAD_ID based on Data Source
+
             {%- call statement("get_load_id", fetch_result=True) -%}
                 select
                     decode(
@@ -69,11 +71,10 @@ Parameters :
             {%- endcall -%}
             {%- set v_load_id = load_result("get_load_id")["data"][0][0] -%}
 
-            -- Insert data into Audit table
             {%- set insert_query -%}
-        Insert into {{v_audit_table}} (id , job_name , data_source , process_type , stage , start_ts , load_id, insert_ts , integration_id ) values
-        ({{v_audit_id}},'{{v_job_name}}','{{v_source}}','{{v_process_type}}','{{v_stage}}',current_timestamp,{{v_load_id}},current_timestamp,'{{v_integration_id}}')
-            {%- endset -%}
+        Insert into {{v_audit_table}} (id , job_name , data_source , SRC_DB , SRC_SCH , SRC_OBJ , TGT_DB , TGT_SCH , TGT_OBJ , start_ts , load_id, insert_ts , integration_id ) values
+        ({{v_audit_id}},'{{v_job_name}}','{{v_source}}','{{env_var("DBT_SRC_DB")}}','{{p_src_sch}}','{{p_src_obj}}','{{env_var("DBT_SRC_DB")}}','{{p_tgt_sch}}','{{p_tgt_obj}}',current_timestamp,{{v_load_id}},current_timestamp,'{{v_integration_id}}')
+            {%- endset -%} 
             {{ run_query(insert_query) }}
             {{ return("Audit created") }}
 
@@ -91,16 +92,13 @@ Parameters :
         set status = '{{v_status}}',
             message = '{{v_message}}',
             end_ts = current_timestamp 
-        where (job_name = '{{v_job_name}}' and stage = '{{v_stage}}'
+        where (job_name = '{{v_job_name}}' --and stage = '{{v_stage}}'
             and id = (select max(id) from {{v_audit_table}} where data_source = '{{v_source}}' ))
             {%- endset -%}
             {{ run_query(update_query) }}
             {{ return("Audit updated") }}
-
         {% else %} {{ exceptions.raise_compiler_error("Invalid Load Type") }}
         {# {{ return("Invalid Load Type") }} #}
         {% endif %}
-
     {% endif %}
-
 {% endmacro %}
