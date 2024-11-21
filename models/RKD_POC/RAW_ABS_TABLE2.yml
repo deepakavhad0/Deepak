@@ -1,3 +1,5 @@
+version: 2
+
 models:
   - name: RAW_ABS_TABLE2
     config:
@@ -9,7 +11,7 @@ models:
       status_fail: "Failed"
       proc_typ_msg_start: "Started validation checks for Table"
       proc_typ_msg_success: "Validation checks for Table are successful"
-      proc_type_msg_failed: "Validation checks for Table are failed"
+      proc_typ_msg_failed: "Validation checks for Table are failed"
       integration_id: ""
       flag: "Y"
       src_sch: "LANDING"
@@ -23,4 +25,9 @@ models:
           - unique
           - not_null
       - name: NAME
+        tests:
+          - not_null
       - name: MOBILE_NUMBER
+        tests:
+          - not_null
+          - unique
