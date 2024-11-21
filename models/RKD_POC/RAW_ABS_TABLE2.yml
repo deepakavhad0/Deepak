@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: RAW_ABS_TABLE2
+    config:
+      src_name: "ABS"
+      ops_upd: "UPD"
+      ops_ins: "INS"
+      status_success: "Success"
+      status_start: "Started"
+      status_fail: "Failed"
+      proc_typ_msg_start: "Started validation checks for Table"
+      proc_typ_msg_success: "Validation checks for Table are successful"
+      proc_typ_msg_failed: "Validation checks for Table are failed"
+      integration_id: ""
+      flag: "Y"
+      src_sch: "LANDING"
+      src_obj: "TABLE2"
+      tgt_sch: "BRNZ_ABS"
+      tgt_obj: "RAW_ABS_TABLE2"
+
+    columns:
+      - name: ID
+        tests:
+          - unique
+          - not_null
+      - name: NAME
+        tests:
+          - not_null
+      - name: MOBILE_NUMBER
+        tests:
+          - not_null
+          - unique
