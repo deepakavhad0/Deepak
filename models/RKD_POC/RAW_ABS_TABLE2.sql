@@ -1,3 +1,5 @@
+-- model 
+
 {{ config(materialized="table",
         schema=var("sch"),
         transient= false,
@@ -17,7 +19,7 @@
     ) %} {{ log('Pre-hook status: ' ~ status, info=True) }}",
         post_hook=["{% set status = insert_data_into_audit_table(
         model.config.ops_upd,
-        model.name, 
+        model.name,
         model.config.src_name,       
         model.config.status_success,
         model.config.proc_typ_msg_success,
@@ -26,7 +28,6 @@
     ) %} {{ log('Post-hook status: ' ~ status, info=True) }}"]
 
 ) }}
-
 
 {{ log("Configured schema: BRNZ_ABS", info=True) }}
 
@@ -60,7 +61,7 @@
     {% set p_job_type = source_data["p_job_type"] %}
     {% set p_is_full_load = source_data["p_is_full_load"] %}
     {% set p_enable_flag = source_data["p_enable_flag"] %}
-    {# Use the returned values in your SQL statement #}
+
     {{ p_src_query }}
 
 {% else %} {{ log("Source data is missing or incomplete.", info=True) }}
